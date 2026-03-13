@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kafka Topic Manager</title>
+    <!-- Modern Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --primary: #8b5cf6;
+        --primary-hover: #7c3aed;
+        --bg: #0f172a;
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --text: #f8fafc;
+        --text-muted: #cbd5e1;
+        --border: rgba(255, 255, 255, 0.1);
+        --success: #10b981;
+        --error: #ef4444;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem 1rem;
+        background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 100%);
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      h1 {
+        font-weight: 700;
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+
+      p.subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+      }
+
+      .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .topic-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .topic-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid transparent;
+        transition: border-color 0.2s;
+      }
+
+      .topic-item:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .form-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 0.875rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+        font-size: 1rem;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      input[type="text"]:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+      }
+
+      button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.875rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      #toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(1rem);
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+      }
+
+      #toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .toast-success { background: var(--success); }
+      .toast-error { background: var(--error); }
+
+      /* GNB Styles */
+      nav.gnb {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 0 2rem;
+      }
+
+      .gnb-content {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        font-weight: 800;
+        font-size: 1.25rem;
+        letter-spacing: -0.025em;
+        background: linear-gradient(135deg, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .notification-bell {
+        position: relative;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .notification-bell:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .bell-icon {
+        width: 24px;
+        height: 24px;
+        fill: var(--text-muted);
+        transition: fill 0.2s;
+      }
+
+      .notification-bell:hover .bell-icon {
+        fill: var(--text);
+      }
+
+      .badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: var(--error);
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid #0f172a;
+        transform: scale(0);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .badge.show {
+        transform: scale(1);
+      }
+
+      @keyframes bell-ring {
+        0%, 100% { transform: rotate(0); }
+        20%, 60% { transform: rotate(15deg); }
+        40%, 80% { transform: rotate(-15deg); }
+      }
+
+      .ring {
+        animation: bell-ring 0.5s ease-in-out;
+      }
+
+      /* Adjust body padding for fixed nav */
+      body {
+        padding-top: 80px;
+      }
+
+      /* Loading Spinner */
+      .loader {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        animation: spin 1s linear infinite;
+        margin-left: auto;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="gnb">
+      <div class="gnb-content">
+        <div class="logo">Kafka Service</div>
+        <div class="nav-actions">
+          <div class="notification-bell" id="notif-bell">
+            <svg class="bell-icon" viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+            </svg>
+            <div id="notif-badge" class="badge">0</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <header>
+        <h1>Kafka Service</h1>
+        <p class="subtitle">Monitor topics and dispatch messages</p>
+      </header>
+
+      <div class="card">
+        <h2>
+          Active Topics
+          <div id="topic-loader" class="loader" style="display: none;"></div>
+        </h2>
+        <ul class="topic-list" id="topic-list">
+          <li class="topic-item" style="color: var(--text-muted);">Loading topics...</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Test Producer API (topic-bizg)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 0.5rem;">Send a testing message to the bizg topic.</p>
+        <div class="form-group">
+          <input type="text" id="message-input" placeholder="Enter your message... (e.g. Hello, Kafka!)" />
+          <button id="send-btn">
+            Send Message
+          </button>
+        </div>
+        
+        <p style="color: var(--text-muted); margin: 1.5rem 0 0.5rem 0; border-top: 1px solid var(--border); padding-top: 1rem;">Upload a file to send its filename.</p>
+        <div class="form-group">
+          <input type="file" id="file-input" style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:0.5rem; padding: 0.5rem 1rem; color: var(--text);" />
+          <button id="upload-btn" style="background:#0ea5e9;">
+            Upload File
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Received Messages 
+          <span id="connection-status" class="status-badge" style="margin-left:auto; font-size: 0.75rem; background:rgba(255,165,0,0.2); color:orange;">Connecting...</span>
+        </h2>
+        <div id="messages-container" style="display:flex; flex-direction:column; gap:0.5rem; max-height:300px; overflow-y:auto; padding-right:0.5rem;">
+          <!-- Messages will appear here -->
+          <div id="no-messages-msg" style="color: var(--text-muted); text-align: center; margin-top: 1rem;">No messages received yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

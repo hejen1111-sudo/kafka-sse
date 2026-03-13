@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: eda-batch-framework
+  
+  datasource:
+    url: jdbc:h2:mem:batchdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false # Job은 이벤트 리스너에 의해 수동으로 트리거됨
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  kafka:
+    # 외부 Kafka 브로커 주소 (예: 특정 서버 IP 또는 도메인)
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: eda-batch-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false # 수동 커밋 사용
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        session.timeout.ms: 45000 # 외부 서버와의 세션 타임아웃
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all # 안정성 (모든 복제본 저장 확인)
+      retries: 3 # 전송 실패 시 재시도 횟수
+    listener:
+      ack-mode: manual_immediate # Listener 동작 모드 수동 관리
+
+app:
+  kafka:
+    topics:
+      trigger: batch-trigger-topic
+      input: batch-input-topic
+      result: batch-result-topic
+      bizg: topic-bizg
+    partitions: 1
+    replicas: 1
+
+logging:
+  level:
+    org.springframework.batch: INFO
+    org.springframework.kafka: INFO
+    com.example.kafka: DEBUG
