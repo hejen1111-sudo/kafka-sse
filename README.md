@@ -47,8 +47,56 @@ npm install
 npm run dev
 ```
 
+## 🛠 Kafka 로직 상세 사용법
+
+본 프로젝트는 Kafka를 활용하여 메시지를 송수신하는 공통 유틸리티가 구현되어 있어 쉽게 비즈니스 로직에 적용할 수 있습니다.
+
+### 1. 메시지 발행 (Producer)
+`KafkaProducerUtil`을 빈(Bean)으로 주입받아 사용합니다.
+
+*   **동기 전송 (Sync)**: 메시지 전송 성공 여부를 즉시 확인해야 할 때 사용합니다.
+    ```java
+    // 1. 토픽명, 2. 키(Partition용), 3. 페이로드(Map 또는 DTO)
+    kafkaProducerUtil.sendSync("topic-name", "key", payload);
+    ```
+*   **비동기 전송 (Async)**: 높은 처리량이 필요하며 즉각적인 응답이 필요 없을 때 사용합니다.
+    ```java
+    kafkaProducerUtil.sendAsync("topic-name", "key", payload);
+    ```
+
+### 2. 메시지 구독 (Consumer)
+`@KafkaListener` 어노테이션을 사용하여 토픽을 구독합니다.
+
+*   **수동 커밋 (Manual Ack)**: 메시지 처리가 완벽히 끝난 후 커밋하여 유실을 방지합니다.
+    ```java
+    @KafkaListener(topics = "topic-name", groupId = "group-id")
+    public void consume(ConsumerRecord<String, Map<String, Object>> record, Acknowledgment acknowledgment) {
+        // 비즈니스 로직 처리
+        log.info("수신 데이터: {}", record.value());
+        
+        // 처리가 완료되면 수동으로 오프셋 커밋
+        acknowledgment.acknowledge();
+    }
+    ```
+
+### 3. 배치 작업 트리거 (Batch Integration)
+특정 토픽으로 아래 형식의 메시지를 발행하면 Spring Batch 작업이 자동으로 시작됩니다.
+*   **토픽명**: `batch-trigger-topic`
+*   **메시지 형식**:
+    ```json
+    {
+      "jobName": "edaBatchJob",
+      "requestId": "RE123456",
+      "parameters": {
+        "key1": "value1"
+      }
+    }
+    ```
+    - `KafkaEventListener`가 해당 메시지를 읽어 `JobLauncher`를 통해 배치를 구동합니다.
+
 ## 📂 프로젝트 구조
 - `src/main/java/com/example/kafka/controller`: API 엔드포인트 및 SSE 컨트롤러
 - `src/main/java/com/example/kafka/batch`: Kafka 리스너 및 Spring Batch 설정
+- `src/main/java/com/example/kafka/util`: Kafka 공통 유틸리티
 - `src/main/java/com/example/kafka/service`: SSE 브로드캐스트 로직
 - `frontend/`: Vite 기반의 웹 프론트엔드 소스
