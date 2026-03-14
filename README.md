@@ -79,14 +79,48 @@
 - 환경 변수: `KAFKA_BOOTSTRAP_SERVERS`, `OCR_API_URL` 등으로 소스 수정 없이 운영 환경 전환
 
 ## 🏃 실행 방법
-### Backend
-```powershell
-# 내장 Kafka 모드로 실행 (로컬 테스트용)
-.\gradlew.bat bootRun --args='--spring.profiles.active=embedded'
 
-# 외장 Kafka 연결 시 (환경 변수 사용)
-set KAFKA_BOOTSTRAP_SERVERS=192.168.1.100:9092
+### Case 1: 개발 모드 (Gradle + 내장 Kafka)
+별도 Kafka 설치 없이 로컬에서 즉시 테스트합니다.
+```powershell
+.\gradlew.bat bootRun --args='--spring.profiles.active=embedded'
+```
+
+### Case 2: 개발 모드 (Gradle + 외장 Kafka)
+별도로 운영 중인 Kafka 서버에 연결합니다.
+```powershell
+$env:KAFKA_BOOTSTRAP_SERVERS="192.168.1.100:9092"
 .\gradlew.bat bootRun
+```
+
+### Case 3: 운영 배포 (JAR 빌드 + 내장 Kafka)
+```powershell
+# 1. JAR 빌드
+.\gradlew.bat clean build -x test
+
+# 2. 내장 Kafka로 실행
+java -jar build/libs/kafka-0.0.1-SNAPSHOT.jar --spring.profiles.active=embedded
+```
+
+### Case 4: 운영 배포 (JAR 빌드 + 외장 Kafka + OCR API 연동)
+실제 운영 환경에서 외부 Kafka 및 OCR API와 연동합니다.
+```powershell
+# 1. JAR 빌드
+.\gradlew.bat clean build -x test
+
+# 2. 환경 변수 지정 후 실행
+java -jar build/libs/kafka-0.0.1-SNAPSHOT.jar ^
+  --spring.kafka.bootstrap-servers=192.168.1.100:9092 ^
+  --app.ocr.api-url=https://ocr-server.example.com/api/masking ^
+  --app.ocr.file-storage-path=/data/uploads/ocr
+```
+
+### Case 5: Linux/Mac 서버 배포 (nohup 백그라운드)
+```bash
+nohup java -jar kafka-0.0.1-SNAPSHOT.jar \
+  --spring.kafka.bootstrap-servers=192.168.1.100:9092 \
+  --app.ocr.api-url=https://ocr-server.example.com/api/masking \
+  > app.log 2>&1 &
 ```
 
 ### Frontend
