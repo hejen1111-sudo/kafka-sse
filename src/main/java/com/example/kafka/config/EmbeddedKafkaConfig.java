@@ -17,7 +17,8 @@ public class EmbeddedKafkaConfig {
                 kafkaProperties.getTopics().getTrigger(),
                 kafkaProperties.getTopics().getInput(),
                 kafkaProperties.getTopics().getResult(),
-                kafkaProperties.getTopics().getBizg())
+                kafkaProperties.getTopics().getAlarm(),
+                kafkaProperties.getTopics().getOcr())
                 .kafkaPorts(9092);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.kafka.batch;
+package com.example.kafka.consumer;
 
 import com.example.kafka.service.SseService;
 import lombok.RequiredArgsConstructor;
@@ -13,19 +13,19 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class BizgConsumer {
+public class AlarmConsumer {
 
     private final SseService sseService;
 
     @KafkaListener(
-            topics = "${app.kafka.topics.bizg}",
+            topics = "${app.kafka.topics.alarm}",
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory"
     )
-    public void consumeBizgEvent(ConsumerRecord<String, Map<String, Object>> record, Acknowledgment acknowledgment) {
+    public void consumeAlarmEvent(ConsumerRecord<String, Map<String, Object>> record, Acknowledgment acknowledgment) {
         log.info("==========================================");
-        log.info("Bizg Consumer Event Received!");
-        log.info("topic-bizg 에 이벤트가 수신되었습니다. hello world");
+        log.info("Alarm Consumer Event Received!");
+        log.info("topic-alarm 에 이벤트가 수신되었습니다.");
         log.info("Received Message payload: {}", record.value());
         log.info("==========================================");
         

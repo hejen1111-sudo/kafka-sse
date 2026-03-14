@@ -21,6 +21,7 @@ public class KafkaProperties {
         private String trigger;
         private String input;
         private String result;
-        private String bizg;
+        private String alarm;
+        private String ocr;
     }
 }

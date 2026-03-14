@@ -51,9 +51,15 @@ app:
       trigger: batch-trigger-topic
       input: batch-input-topic
       result: batch-result-topic
-      bizg: topic-bizg
+      alarm: topic-alarm
+      ocr: topic-ocr
     partitions: 1
     replicas: 1
+
+  ocr:
+    api-url: ${OCR_API_URL:http://localhost:9090/api/masking}  # 외부 OCR 마스킹 API 주소
+    file-storage-path: ${OCR_FILE_STORAGE_PATH:C:/Workspace/antigravity/kafka/uploads/ocr}  # 파일 저장 경로
+    timeout-seconds: 60  # 외부 API 호출 타임아웃
 
 logging:
   level:

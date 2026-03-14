@@ -80,7 +80,7 @@ async function sendMessage() {
     const formData = new URLSearchParams();
     formData.append('message', message);
     
-    const res = await fetch(`${API_BASE}/bizg/produce`, {
+    const res = await fetch(`${API_BASE}/alarm/produce`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -117,7 +117,7 @@ async function uploadFile() {
     const formData = new FormData();
     formData.append('file', file);
     
-    const res = await fetch(`${API_BASE}/bizg/produce/file`, {
+    const res = await fetch(`${API_BASE}/alarm/produce/file`, {
       method: 'POST',
       body: formData
     });

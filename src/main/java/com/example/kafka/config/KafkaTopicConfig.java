@@ -37,8 +37,16 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic bizgTopic() {
-        return TopicBuilder.name(properties.getTopics().getBizg())
+    public NewTopic alarmTopic() {
+        return TopicBuilder.name(properties.getTopics().getAlarm())
+                .partitions(properties.getPartitions())
+                .replicas(properties.getReplicas())
+                .build();
+    }
+
+    @Bean
+    public NewTopic ocrTopic() {
+        return TopicBuilder.name(properties.getTopics().getOcr())
                 .partitions(properties.getPartitions())
                 .replicas(properties.getReplicas())
                 .build();
